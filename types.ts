@@ -20,7 +20,7 @@ export interface Stats {
 }
 
 export interface CalorieData {
-    CaloriesBurned: CaloriesBurned;
+    CaloriesBurned: CaloriesBurned[];
 }
 
 export interface CaloriesBurned {
@@ -31,20 +31,20 @@ export interface CaloriesBurned {
 export interface GeneralData {
     DisplayName:                string;
     CharacterID:                string;
-    LastUsedHighScoreName:      string;
+    LastUsedHighScoreName:      Name;
     WeightPounds:               number;
     Voomax:                     number;
     BirthYear:                  number;
     IgnoreStepCountCalories:    number;
     IsMale:                     number;
     IsMachine:                  number;
-    Guid:                       string;
+    Guid:                       GUID;
     SortOrder:                  string;
-    LastDifficulty:             string;
-    LastCourseDifficulty:       string;
-    LastStepsType:              string;
+    LastDifficulty:             Difficulty;
+    LastCourseDifficulty:       Difficulty;
+    LastStepsType:              StepsType;
     Song:                       GeneralDataSong;
-    Course:                     string;
+    Course:                     Course;
     CurrentCombo:               number;
     TotalSessions:              number;
     TotalSessionSeconds:        number;
@@ -53,7 +53,7 @@ export interface GeneralData {
     GoalType:                   number;
     GoalCalories:               number;
     GoalSeconds:                number;
-    LastPlayedMachineGuid:      string;
+    LastPlayedMachineGuid:      MachineGUID;
     LastPlayedDate:             string;
     TotalDancePoints:           number;
     NumExtraStagesPassed:       number;
@@ -71,23 +71,56 @@ export interface GeneralData {
     NumSongsPlayedByPlayMode:   NumSedByPlayMode;
     NumSongsPlayedByStyle:      NumSongsPlayedByStyle;
     NumSongsPlayedByDifficulty: NumSongsPlayedByDifficulty;
-    NumSongsPlayedByMeter:      NumSongsPlayedByMeter;
+    NumSongsPlayedByMeter:      { [key: string]: number };
     NumTotalSongsPlayed:        number;
     NumStagesPassedByPlayMode:  NumSedByPlayMode;
     NumStagesPassedByGrade:     { [key: string]: number };
+    UserTable:                  string;
+}
+
+export interface Course {
+    "@_FullTitle": string;
 }
 
 export interface DefaultModifiers {
     dance: string;
 }
 
-export interface NumSongsPlayedByDifficulty {
-    Challenge: number;
+export enum GUID {
+    The07E3Fcdb2343997F = "07e3fcdb2343997f",
 }
 
-export interface NumSongsPlayedByMeter {
-    Meter9:  number;
-    Meter11: number;
+export enum Difficulty {
+    Beginner = "Beginner",
+    Challenge = "Challenge",
+    Easy = "Easy",
+    Edit = "Edit",
+    Hard = "Hard",
+    Medium = "Medium",
+}
+
+export enum MachineGUID {
+    A734Ddafc2A955B9 = "a734ddafc2a955b9",
+    Af51A1E5Ad23Affc = "af51a1e5ad23affc",
+    B896B96B3Be9Dc5A = "b896b96b3be9dc5a",
+}
+
+export enum StepsType {
+    DanceDouble = "dance-double",
+    DanceSingle = "dance-single",
+}
+
+export enum Name {
+    Zxyu = "ZXYU",
+}
+
+export interface NumSongsPlayedByDifficulty {
+    Beginner:  number;
+    Easy:      number;
+    Medium:    number;
+    Hard:      number;
+    Challenge: number;
+    Edit:      number;
 }
 
 export interface NumSedByPlayMode {
@@ -95,7 +128,7 @@ export interface NumSedByPlayMode {
 }
 
 export interface NumSongsPlayedByStyle {
-    Style: Style;
+    Style: Style[];
 }
 
 export interface Style {
@@ -109,40 +142,61 @@ export interface GeneralDataSong {
 }
 
 export interface SongScores {
-    Song: SongElement[];
+    Song: Array<SongScoresSong | null>;
 }
 
-export interface SongElement {
-    Steps:   Steps;
+export interface SongScoresSong {
+    Steps:   Step[] | StepsClass;
     "@_Dir": string;
 }
 
-export interface Steps {
+export interface Step {
     HighScoreList:  HighScoreList;
-    "@_Difficulty": string;
-    "@_StepsType":  string;
+    "@_Difficulty": Difficulty;
+    "@_StepsType":  StepsType;
 }
 
 export interface HighScoreList {
     NumTimesPlayed: number;
     LastPlayed:     string;
-    HighGrade:      string;
-    HighScore:      HighScore;
+    HighGrade?:     Grade;
+    HighScore?:     HighScoreElement[] | HighScoreElement;
 }
 
-export interface HighScore {
-    Name:                 string;
-    Grade:                string;
+export enum Grade {
+    Failed = "Failed",
+    Tier01 = "Tier01",
+    Tier02 = "Tier02",
+    Tier03 = "Tier03",
+    Tier04 = "Tier04",
+    Tier05 = "Tier05",
+    Tier06 = "Tier06",
+    Tier07 = "Tier07",
+    Tier08 = "Tier08",
+    Tier09 = "Tier09",
+    Tier10 = "Tier10",
+    Tier11 = "Tier11",
+    Tier12 = "Tier12",
+    Tier13 = "Tier13",
+    Tier14 = "Tier14",
+    Tier15 = "Tier15",
+    Tier16 = "Tier16",
+    Tier17 = "Tier17",
+}
+
+export interface HighScoreElement {
+    Name:                 Name;
+    Grade:                Grade;
     Score:                number;
     PercentDP:            number;
     SurviveSeconds:       number;
     MaxCombo:             number;
-    StageAward:           string;
-    PeakComboAward:       string;
+    StageAward:           StageAward;
+    PeakComboAward:       number | string;
     Modifiers:            string;
     DateTime:             string;
-    PlayerGuid:           string;
-    MachineGuid:          string;
+    PlayerGuid:           GUID;
+    MachineGuid:          MachineGUID;
     ProductID:            number;
     TapNoteScores:        TapNoteScores;
     HoldNoteScores:       HoldNoteScores;
@@ -157,6 +211,15 @@ export interface HoldNoteScores {
     MissedHold: number;
 }
 
+export enum StageAward {
+    Empty = "",
+    FullComboW2 = "FullComboW2",
+    FullComboW3 = "FullComboW3",
+    OneW3 = "OneW3",
+    SingleDigitW2 = "SingleDigitW2",
+    SingleDigitW3 = "SingleDigitW3",
+}
+
 export interface TapNoteScores {
     HitMine:        number;
     AvoidMine:      number;
@@ -168,4 +231,12 @@ export interface TapNoteScores {
     W2:             number;
     W1:             number;
     CheckpointHit:  number;
+}
+
+export interface StepsClass {
+    HighScoreList:    HighScoreList;
+    "@_Difficulty":   Difficulty;
+    "@_StepsType":    StepsType;
+    "@_Description"?: string;
+    "@_Hash"?:        string;
 }
