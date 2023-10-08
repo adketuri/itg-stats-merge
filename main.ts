@@ -1,13 +1,100 @@
 import { XMLParser, XMLBuilder, XMLValidator} from "fast-xml-parser";
 import fs from 'fs';
-import { SaveXML, SongScores, SongScoresSong } from "./types";
+import { HighScoreElement, SaveXML, SongScores, SongScoresSong, Step } from "./types";
 
 console.log("START")
 let ecfa: SaveXML;
 let itg: SaveXML;
 
-function ecfaToItgSong(ecfaSong: SongScoresSong): SongScoresSong {
-    return ecfaSong
+function addHighscores(toAdd: HighScoreElement[] | HighScoreElement, faModeToItgMode: boolean): HighScoreElement[]{
+    let newHs: HighScoreElement[] = []
+    if (Array.isArray(toAdd)){
+        toAdd.forEach((ih) => newHs.push(ih))
+    } else {
+        newHs.push(toAdd)
+    }
+    return newHs
+}
+
+function mergeHighScores(itgHs: HighScoreElement[] | HighScoreElement, existingHs: HighScoreElement[] | HighScoreElement): HighScoreElement[]{
+    let newHs = [...addHighscores(itgHs, false), ...addHighscores(existingHs, true)]
+    // TODO sort
+    return newHs
+}
+
+function mergeSteps(itgStep: Step, existingStep: Step): Step{
+    let newStep: Step = { HighScoreList: { NumTimesPlayed: 0, LastPlayed: "", HighGrade: undefined, HighScore: []}, "@_Difficulty": itgStep["@_Difficulty"],  "@_StepsType": itgStep["@_StepsType"]}
+    newStep.HighScoreList.NumTimesPlayed = itgStep.HighScoreList.NumTimesPlayed + existingStep.HighScoreList.NumTimesPlayed;
+    newStep.HighScoreList.HighGrade = itgStep.HighScoreList.HighGrade > existingStep.HighScoreList.HighGrade ? existingStep.HighScoreList.HighGrade : itgStep.HighScoreList.HighGrade
+    newStep.HighScoreList.LastPlayed = itgStep.HighScoreList.LastPlayed > existingStep.HighScoreList.LastPlayed ? existingStep.HighScoreList.LastPlayed : itgStep.HighScoreList.LastPlayed
+    newStep.HighScoreList.HighScore = mergeHighScores(itgStep.HighScoreList.HighScore, existingStep.HighScoreList.HighScore)
+    return newStep
+}
+
+function mergeSongs(ecfaSong: SongScoresSong, itgSong?: SongScoresSong): SongScoresSong {
+    // kill the FA+ window
+    // HighScore is either an array or single element
+    let newSongs = { Steps: [], "@_Dir": ecfaSong["@_Dir"]} 
+
+    if (Array.isArray(ecfaSong.Steps)){
+        ecfaSong.Steps.forEach((s: Step)=> newSongs.Steps.push(s))
+    } else {
+        newSongs.Steps.push(ecfaSong.Steps)
+    }
+    if (itgSong){
+        if (Array.isArray(itgSong.Steps)){
+            itgSong.Steps.forEach((itgStep: Step) => {
+                const existingStep: Step = newSongs.Steps.find((newStep: Step) => newStep["@_Difficulty"] === itgStep["@_Difficulty"] && newStep["@_StepsType"] === itgStep["@_StepsType"])
+                if (!existingStep){
+                    newSongs.Steps.push(itgStep)
+                } else {
+                    newSongs.Steps.push(mergeSteps(itgStep, existingStep))
+                }
+            })
+        } else {
+            newSongs.Steps.push(itgSong.Steps)
+        }
+    }
+    // if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
+    //     ecfaSong.Steps.HighScoreList.HighScore.forEach(hs => {
+    //         hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
+    //         hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
+    //         hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
+    //         hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
+    //         hs.TapNoteScores.W5 = 0;
+    //     })
+    // } else {
+    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W1 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W1 + ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W2;
+    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W2 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W3;
+    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W3 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W4;
+    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W4 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W5;
+    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W5 = 0;
+    // }
+    // if (itgSong){
+    //     if (Array.isArray(itgSong.Steps.HighScoreList.HighScore)) { 
+    //         if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
+    //             itgSong.Steps.HighScoreList.HighScore.forEach(s => ecfaSong.Steps.HighScoreList.HighScore.push(s))
+    //         } else {
+    //             ecfaSong.Steps.HighScoreList.HighScore = itgSong.Steps.HighScoreList.HighScore
+    //         }
+    //     } else {
+    //         itgSong.Steps.HighScoreList.HighScore = ecfaSong.Steps.HighScoreList.HighScore
+    //     }
+        
+    //     if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
+    //         ecfaSong.Steps.HighScoreList.HighScore.forEach(hs => {
+    //             console.log("Compare ", hs.Grade, ecfaSong.Steps.HighScoreList.HighGrade )
+    //             if (hs.Grade < ecfaSong.Steps.HighScoreList.HighGrade){
+    //                 ecfaSong.Steps.HighScoreList.HighGrade = hs.Grade
+    //                 console.log("  New is ", hs.Grade)
+    //             }
+    //         })
+    //     }
+    //     ecfaSong.Steps.HighScoreList.NumTimesPlayed = ecfaSong.Steps.HighScoreList.HighScore.length
+    // }
+    return newSongs;
+    
+    // return ecfaSong
 }
 
 function combine(){
@@ -40,13 +127,14 @@ function combine(){
         const ecfaSong = ecfa.Stats.SongScores.Song[i];
         const matchingItg = itg.Stats.SongScores.Song.find(s => s["@_Dir"] === ecfaSong["@_Dir"])
         if (matchingItg){
+            allSongs.push(mergeSongs(ecfaSong, matchingItg))
             // matchingItg.Steps.
             ecfa.Stats.SongScores.Song[i] = undefined;
         }
     }
 
     // push remaining ecfa songs that didn't match itg
-    ecfa.Stats.SongScores.Song.forEach(s => s && allSongs.push(ecfaToItgSong(s)))
+    ecfa.Stats.SongScores.Song.forEach(s => s && allSongs.push(mergeSongs(s)))
 
     // itg.Stats.GeneralData.NumSongsPlayedByDifficulty.Challenge += ecfa.Stats.GeneralData.TotalTapsAndHolds;
 
