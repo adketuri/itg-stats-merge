@@ -69,6 +69,7 @@ function mergeSongs(ecfaSong: SongScoresSong, itgSong?: SongScoresSong): SongSco
 // ideally this would return a new array but for now we'll just mutate `itg`
 function combine(){
     itg.Stats.GeneralData.TotalSessions += ecfa.Stats.GeneralData.TotalSessions;
+    itg.Stats.GeneralData.TotalGameplaySeconds += ecfa.Stats.GeneralData.TotalGameplaySeconds;
     itg.Stats.GeneralData.TotalSessionSeconds += ecfa.Stats.GeneralData.TotalSessionSeconds;
     itg.Stats.GeneralData.TotalCaloriesBurned += ecfa.Stats.GeneralData.TotalCaloriesBurned;
     itg.Stats.GeneralData.TotalDancePoints += ecfa.Stats.GeneralData.TotalDancePoints;
