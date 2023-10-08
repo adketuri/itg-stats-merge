@@ -8,6 +8,6 @@
     "fast-xml-parser": "^4.3.2"
   },
   "scripts": {
-    "convert": "tsc -p tsconfig.json main.ts"
+    "convert": "tsc --project tsconfig.json && node dist/main.js "
   }
 }

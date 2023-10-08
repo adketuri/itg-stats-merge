@@ -138,10 +138,11 @@ let itg: SaveXML;
 const opts = {ignoreAttributes: false, attributeNamePrefix : "@_", allowBooleanAttributes: true}
 const parser = new XMLParser(opts);
 
-fs.readFile('input/ECFA-Stats.xml', 'utf8', (err, data) => {
+console.log("process", process.argv)
+fs.readFile(process.argv.length > 3 ? process.argv[3] : 'input/ECFA-Stats.xml', 'utf8', (err, data) => {
     if (err) { console.error(err); return; }
     ecfa = parser.parse(data, opts);
-    fs.readFile('input/Stats.xml', 'utf8', (err, data) => {
+    fs.readFile(process.argv.length > 2 ? process.argv[2] : 'input/Stats.xml', 'utf8', (err, data) => {
         if (err) { console.error(err); return; }
         itg = parser.parse(data, opts);
         combine(); // this mutates `itg`
