@@ -25,8 +25,8 @@ function mergeHighScores(itgHs: HighScoreElement[] | HighScoreElement, existingH
 function mergeSteps(itgStep: Step, existingStep: Step): Step{
     let newStep: Step = { HighScoreList: { NumTimesPlayed: 0, LastPlayed: "", HighGrade: undefined, HighScore: []}, "@_Difficulty": itgStep["@_Difficulty"],  "@_StepsType": itgStep["@_StepsType"]}
     newStep.HighScoreList.NumTimesPlayed = itgStep.HighScoreList.NumTimesPlayed + existingStep.HighScoreList.NumTimesPlayed;
-    newStep.HighScoreList.HighGrade = itgStep.HighScoreList.HighGrade > existingStep.HighScoreList.HighGrade ? existingStep.HighScoreList.HighGrade : itgStep.HighScoreList.HighGrade
-    newStep.HighScoreList.LastPlayed = itgStep.HighScoreList.LastPlayed > existingStep.HighScoreList.LastPlayed ? existingStep.HighScoreList.LastPlayed : itgStep.HighScoreList.LastPlayed
+    newStep.HighScoreList.HighGrade = itgStep.HighScoreList.HighGrade < existingStep.HighScoreList.HighGrade ? existingStep.HighScoreList.HighGrade : itgStep.HighScoreList.HighGrade
+    newStep.HighScoreList.LastPlayed = itgStep.HighScoreList.LastPlayed < existingStep.HighScoreList.LastPlayed ? existingStep.HighScoreList.LastPlayed : itgStep.HighScoreList.LastPlayed
     newStep.HighScoreList.HighScore = mergeHighScores(itgStep.HighScoreList.HighScore, existingStep.HighScoreList.HighScore)
     return newStep
 }
@@ -44,15 +44,22 @@ function mergeSongs(ecfaSong: SongScoresSong, itgSong?: SongScoresSong): SongSco
     if (itgSong){
         if (Array.isArray(itgSong.Steps)){
             itgSong.Steps.forEach((itgStep: Step) => {
-                const existingStep: Step = newSongs.Steps.find((newStep: Step) => newStep["@_Difficulty"] === itgStep["@_Difficulty"] && newStep["@_StepsType"] === itgStep["@_StepsType"])
+                // TODO combine me v
+                let existingStep: Step = newSongs.Steps.find((newStep: Step) => newStep["@_Difficulty"] === itgStep["@_Difficulty"] && newStep["@_StepsType"] === itgStep["@_StepsType"])
                 if (!existingStep){
                     newSongs.Steps.push(itgStep)
                 } else {
-                    newSongs.Steps.push(mergeSteps(itgStep, existingStep))
+                    newSongs.Steps[newSongs.Steps.indexOf(existingStep)] = mergeSteps(itgStep, existingStep)
                 }
             })
         } else {
-            newSongs.Steps.push(itgSong.Steps)
+            // TODO combine me ^
+            let existingStep: Step = newSongs.Steps.find((newStep: Step) => newStep["@_Difficulty"] === itgSong.Steps["@_Difficulty"] && newStep["@_StepsType"] === itgSong.Steps["@_StepsType"])
+            if (!existingStep){
+                newSongs.Steps.push(itgSong.Steps)
+            } else {
+                newSongs.Steps[newSongs.Steps.indexOf(existingStep)] = mergeSteps(itgSong.Steps, existingStep)
+            }
         }
     }
     // if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
@@ -97,6 +104,8 @@ function mergeSongs(ecfaSong: SongScoresSong, itgSong?: SongScoresSong): SongSco
     // return ecfaSong
 }
 
+// puts `ecfa` scores into `itg`
+// ideally this would return a new array but for now we'll just mutate `itg`
 function combine(){
     itg.Stats.GeneralData.TotalSessions += ecfa.Stats.GeneralData.TotalSessions;
     itg.Stats.GeneralData.TotalSessionSeconds += ecfa.Stats.GeneralData.TotalSessionSeconds;
@@ -117,34 +126,25 @@ function combine(){
     itg.Stats.GeneralData.NumTotalSongsPlayed += ecfa.Stats.GeneralData.NumTotalSongsPlayed
     Object.keys(itg.Stats.GeneralData.NumStagesPassedByGrade).forEach((k) => itg.Stats.GeneralData.NumStagesPassedByGrade[k] += ecfa.Stats.GeneralData.NumStagesPassedByGrade[k]);
 
-    // for each ecfa song
-        // see if it exists in itg
-            // if so merge and delete it
-        // merge all the others
-    let allSongs: Array<SongScoresSong> = new Array();
-
+    // build a new array consisting of all our song scores we want to add back into `itg`
+    let mergedSongs: Array<SongScoresSong> = new Array();
     for (let i = ecfa.Stats.SongScores.Song.length - 1; i >= 0; i--){
         const ecfaSong = ecfa.Stats.SongScores.Song[i];
+        if (ecfaSong["@_Dir"] === "Songs/ECFA 2021 (09s Day 1)/drop pop candy (SX 9)/"){
+            console.log(ecfaSong["@_Dir"])
+        }
         const matchingItg = itg.Stats.SongScores.Song.find(s => s["@_Dir"] === ecfaSong["@_Dir"])
         if (matchingItg){
-            allSongs.push(mergeSongs(ecfaSong, matchingItg))
-            // matchingItg.Steps.
-            ecfa.Stats.SongScores.Song[i] = undefined;
+            // we have a matching `itg` song, so we'll need to merge and push to our mergedSongs array
+            mergedSongs.push(mergeSongs(ecfaSong, matchingItg))
+            // remove the matching itg song from the original array, we'll re-add after we're done with the newly-merged stats
+            itg.Stats.SongScores.Song = itg.Stats.SongScores.Song.filter(s => s["@_Dir"] !== matchingItg["@_Dir"])
+        } else {
+            // no merging required, this song isn't in `itg`
+            mergedSongs.push(ecfaSong);
         }
     }
-
-    // push remaining ecfa songs that didn't match itg
-    ecfa.Stats.SongScores.Song.forEach(s => s && allSongs.push(mergeSongs(s)))
-
-    // itg.Stats.GeneralData.NumSongsPlayedByDifficulty.Challenge += ecfa.Stats.GeneralData.TotalTapsAndHolds;
-
-
-
-
-
-
-
-
+    mergedSongs.forEach(s => itg.Stats.SongScores.Song.push(s))
 }
 
 const opts = {ignoreAttributes: false, attributeNamePrefix : "@_", allowBooleanAttributes: true}
@@ -156,12 +156,11 @@ fs.readFile('/Users/andrew/itg-stats-merge/input/ECFA-Stats.xml', 'utf8', (err, 
     fs.readFile('/Users/andrew/itg-stats-merge/input/Stats.xml', 'utf8', (err, data) => {
         if (err) { console.error(err); return; }
         itg = parser.parse(data, opts);
-        
-        combine();
+        combine(); // this mutates `itg`
 
         const builder = new XMLBuilder(opts);
         const xmlContent = builder.build(itg);
-        fs.writeFile("output/Stats.json", JSON.stringify(itg), ()=> console.log("DONE combined json"));
+        fs.writeFile("output/Stats-Merged.json", JSON.stringify(itg), ()=> console.log("DONE combined json"));
         fs.writeFile("output/Stats-Merged.xml", xmlContent, () => console.log("DONE merged xml"))
   });
 });
