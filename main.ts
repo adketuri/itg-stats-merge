@@ -1,10 +1,18 @@
 import { XMLParser, XMLBuilder} from "fast-xml-parser";
-import fs from 'fs';
+import * as fs from 'fs';
 import { HighScoreElement, SaveXML, SongScoresSong, Step } from "./types";
 
-console.log("START")
-let ecfa: SaveXML;
-let itg: SaveXML;
+function demoteScore(hs: HighScoreElement): void {
+    if (!hs){
+        // there's actually a world where there's a played entry but there's no scores yet, we can just return
+        return;
+    }
+    hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
+    hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
+    hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
+    hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
+    hs.TapNoteScores.W5 = 0;
+}
 
 function addHighscores(toAdd: HighScoreElement[] | HighScoreElement, faModeToItgMode: boolean): HighScoreElement[]{
     let newHs: HighScoreElement[] = []
@@ -109,9 +117,6 @@ function combine(){
             }
         }
 
-        if (ecfaSong["@_Dir"] === "Songs/ECFA 2021 (09s Day 1)/drop pop candy (SX 9)/"){
-            console.log(ecfaSong["@_Dir"])
-        }
         const matchingItg = itg.Stats.SongScores.Song.find(s => s["@_Dir"] === ecfaSong["@_Dir"])
         if (matchingItg){
             // we have a matching `itg` song, so we'll need to merge and push to our mergedSongs array
@@ -126,32 +131,24 @@ function combine(){
     mergedSongs.forEach(s => itg.Stats.SongScores.Song.push(s))
 }
 
+console.log("START")
+let ecfa: SaveXML;
+let itg: SaveXML;
+
 const opts = {ignoreAttributes: false, attributeNamePrefix : "@_", allowBooleanAttributes: true}
 const parser = new XMLParser(opts);
 
-fs.readFile('/Users/andrew/itg-stats-merge/input/ECFA-Stats.xml', 'utf8', (err, data) => {
+fs.readFile('input/ECFA-Stats.xml', 'utf8', (err, data) => {
     if (err) { console.error(err); return; }
     ecfa = parser.parse(data, opts);
-    fs.readFile('/Users/andrew/itg-stats-merge/input/Stats.xml', 'utf8', (err, data) => {
+    fs.readFile('input/Stats.xml', 'utf8', (err, data) => {
         if (err) { console.error(err); return; }
         itg = parser.parse(data, opts);
         combine(); // this mutates `itg`
 
         const builder = new XMLBuilder(opts);
         const xmlContent = builder.build(itg);
-        fs.writeFile("output/Stats-Merged.json", JSON.stringify(itg), ()=> console.log("DONE combined json"));
+        fs.writeFile("output/Stats-Merged.json", JSON.stringify(itg), ()=> console.log("DONE merged json"));
         fs.writeFile("output/Stats-Merged.xml", xmlContent, () => console.log("DONE merged xml"))
   });
 });
-
-function demoteScore(hs: HighScoreElement): void {
-    if (!hs){
-        // there's actually a world where there's a played entry but there's no scores yet, we can just return
-        return;
-    }
-    hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
-    hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
-    hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
-    hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
-    hs.TapNoteScores.W5 = 0;
-}
