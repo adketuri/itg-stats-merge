@@ -1,6 +1,6 @@
-import { XMLParser, XMLBuilder, XMLValidator} from "fast-xml-parser";
+import { XMLParser, XMLBuilder} from "fast-xml-parser";
 import fs from 'fs';
-import { HighScoreElement, SaveXML, SongScores, SongScoresSong, Step } from "./types";
+import { HighScoreElement, SaveXML, SongScoresSong, Step } from "./types";
 
 console.log("START")
 let ecfa: SaveXML;
@@ -62,46 +62,7 @@ function mergeSongs(ecfaSong: SongScoresSong, itgSong?: SongScoresSong): SongSco
             }
         }
     }
-    // if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
-    //     ecfaSong.Steps.HighScoreList.HighScore.forEach(hs => {
-    //         hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
-    //         hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
-    //         hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
-    //         hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
-    //         hs.TapNoteScores.W5 = 0;
-    //     })
-    // } else {
-    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W1 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W1 + ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W2;
-    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W2 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W3;
-    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W3 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W4;
-    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W4 = ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W5;
-    //     ecfaSong.Steps.HighScoreList.HighScore.TapNoteScores.W5 = 0;
-    // }
-    // if (itgSong){
-    //     if (Array.isArray(itgSong.Steps.HighScoreList.HighScore)) { 
-    //         if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
-    //             itgSong.Steps.HighScoreList.HighScore.forEach(s => ecfaSong.Steps.HighScoreList.HighScore.push(s))
-    //         } else {
-    //             ecfaSong.Steps.HighScoreList.HighScore = itgSong.Steps.HighScoreList.HighScore
-    //         }
-    //     } else {
-    //         itgSong.Steps.HighScoreList.HighScore = ecfaSong.Steps.HighScoreList.HighScore
-    //     }
-        
-    //     if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
-    //         ecfaSong.Steps.HighScoreList.HighScore.forEach(hs => {
-    //             console.log("Compare ", hs.Grade, ecfaSong.Steps.HighScoreList.HighGrade )
-    //             if (hs.Grade < ecfaSong.Steps.HighScoreList.HighGrade){
-    //                 ecfaSong.Steps.HighScoreList.HighGrade = hs.Grade
-    //                 console.log("  New is ", hs.Grade)
-    //             }
-    //         })
-    //     }
-    //     ecfaSong.Steps.HighScoreList.NumTimesPlayed = ecfaSong.Steps.HighScoreList.HighScore.length
-    // }
     return newSongs;
-    
-    // return ecfaSong
 }
 
 // puts `ecfa` scores into `itg`
@@ -130,6 +91,23 @@ function combine(){
     let mergedSongs: Array<SongScoresSong> = new Array();
     for (let i = ecfa.Stats.SongScores.Song.length - 1; i >= 0; i--){
         const ecfaSong = ecfa.Stats.SongScores.Song[i];
+
+        if (Array.isArray(ecfaSong.Steps)){
+            ecfaSong.Steps.forEach((stp: Step) => {
+                if (Array.isArray(stp.HighScoreList.HighScore)){
+                    stp.HighScoreList.HighScore.forEach(demoteScore);
+                } else {
+                    demoteScore(stp.HighScoreList.HighScore);
+                }
+            })
+        } else {
+            if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)){
+                ecfaSong.Steps.HighScoreList.HighScore.forEach(demoteScore);
+            } else {
+                demoteScore(ecfaSong.Steps.HighScoreList.HighScore);
+            }
+        }
+
         if (ecfaSong["@_Dir"] === "Songs/ECFA 2021 (09s Day 1)/drop pop candy (SX 9)/"){
             console.log(ecfaSong["@_Dir"])
         }
@@ -164,3 +142,15 @@ fs.readFile('/Users/andrew/itg-stats-merge/input/ECFA-Stats.xml', 'utf8', (err, 
         fs.writeFile("output/Stats-Merged.xml", xmlContent, () => console.log("DONE merged xml"))
   });
 });
+
+function demoteScore(hs: HighScoreElement): void {
+    if (!hs){
+        // there's actually a world where there's a played entry but there's no scores yet, we can just return
+        return;
+    }
+    hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
+    hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
+    hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
+    hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
+    hs.TapNoteScores.W5 = 0;
+}
