@@ -161,7 +161,7 @@ fs.readFile('/Users/andrew/itg-stats-merge/input/ECFA-Stats.xml', 'utf8', (err, 
 
         const builder = new XMLBuilder(opts);
         const xmlContent = builder.build(itg);
-        fs.writeFile("out.json", JSON.stringify(ecfa), ()=> console.log("DONE json"));
-        fs.writeFile("out.xml", xmlContent, () => console.log("DONE xml"))
+        fs.writeFile("output/Stats.json", JSON.stringify(itg), ()=> console.log("DONE combined json"));
+        fs.writeFile("output/Stats-Merged.xml", xmlContent, () => console.log("DONE merged xml"))
   });
 });
