@@ -1,6 +1,7 @@
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 import * as fs from "fs";
 import { HighScoreElement, SaveXML, SongScoresSong, Step } from "./types";
+import { xmlValueToArray } from "./utils";
 
 function demoteScore(hs: HighScoreElement): void {
   if (!hs) {
@@ -39,7 +40,11 @@ function mergeHighScores(
   return newHs;
 }
 
-function mergeSteps(itgStep: Step, existingStep: Step): Step {
+function mergeSteps(itgStep: Step, existingStep?: Step): Step {
+  if (!existingStep) {
+    return itgStep;
+  }
+
   let newStep: Step = {
     HighScoreList: {
       NumTimesPlayed: 0,
@@ -77,50 +82,35 @@ function mergeSongs(
   ecfaSong: SongScoresSong,
   itgSong?: SongScoresSong
 ): SongScoresSong {
+  if (!itgSong) {
+    return ecfaSong;
+  }
+
   // kill the FA+ window
   // HighScore is either an array or single element
-  let newSongs = { Steps: [], "@_Dir": ecfaSong["@_Dir"] };
+  let newSongs = {
+    Steps: xmlValueToArray(ecfaSong.Steps),
+    "@_Dir": ecfaSong["@_Dir"],
+  };
 
-  if (Array.isArray(ecfaSong.Steps)) {
-    ecfaSong.Steps.forEach((s: Step) => newSongs.Steps.push(s));
-  } else {
-    newSongs.Steps.push(ecfaSong.Steps);
-  }
-  if (itgSong) {
-    if (Array.isArray(itgSong.Steps)) {
-      itgSong.Steps.forEach((itgStep: Step) => {
-        // TODO combine me v
-        let existingStep: Step = newSongs.Steps.find(
-          (newStep: Step) =>
-            newStep["@_Difficulty"] === itgStep["@_Difficulty"] &&
-            newStep["@_StepsType"] === itgStep["@_StepsType"]
-        );
-        if (!existingStep) {
-          newSongs.Steps.push(itgStep);
-        } else {
-          newSongs.Steps[newSongs.Steps.indexOf(existingStep)] = mergeSteps(
-            itgStep,
-            existingStep
-          );
-        }
-      });
+  const itgSteps = xmlValueToArray(itgSong.Steps);
+
+  itgSteps.forEach((itgStep: Step) => {
+    // TODO combine me v
+    const existingStep: Step | undefined = newSongs.Steps.find(
+      (newStep: Step) =>
+        newStep["@_Difficulty"] === itgStep["@_Difficulty"] &&
+        newStep["@_StepsType"] === itgStep["@_StepsType"]
+    );
+    const existingStepIndex = newSongs.Steps.indexOf(existingStep);
+    const mergedSteps = mergeSteps(itgStep, existingStep);
+    if (!existingStep) {
+      newSongs.Steps.push(mergedSteps);
     } else {
-      // TODO combine me ^
-      let existingStep: Step = newSongs.Steps.find(
-        (newStep: Step) =>
-          newStep["@_Difficulty"] === itgSong.Steps["@_Difficulty"] &&
-          newStep["@_StepsType"] === itgSong.Steps["@_StepsType"]
-      );
-      if (!existingStep) {
-        newSongs.Steps.push(itgSong.Steps);
-      } else {
-        newSongs.Steps[newSongs.Steps.indexOf(existingStep)] = mergeSteps(
-          itgSong.Steps,
-          existingStep
-        );
-      }
+      newSongs.Steps[existingStepIndex] = mergedSteps;
     }
-  }
+  });
+
   return newSongs;
 }
 
@@ -155,15 +145,15 @@ function combine() {
 
   itg.Stats.GeneralData.NumSongsPlayedByStyle.Style.forEach((s) => {
     const ecfaNumSongsPlayedByStyle =
-      ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style.find((s2) => {
-        console.log({ s, s2 });
-        return s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"];
-      });
+      ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style.find(
+        (s2) => s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"]
+      );
     if (!ecfaNumSongsPlayedByStyle) {
       return;
     }
     return (s["#text"] += ecfaNumSongsPlayedByStyle["#text"]);
   });
+
   // these object.keys assume both xml files have all keys, because i'm lazy
   Object.keys(itg.Stats.GeneralData.NumSongsPlayedByDifficulty).forEach(
     (k) =>
@@ -190,39 +180,26 @@ function combine() {
   let mergedSongs: Array<SongScoresSong> = new Array();
   for (let i = ecfa.Stats.SongScores.Song.length - 1; i >= 0; i--) {
     const ecfaSong = ecfa.Stats.SongScores.Song[i];
+    const ecfaSongSteps = xmlValueToArray(ecfaSong.Steps);
 
-    if (Array.isArray(ecfaSong.Steps)) {
-      ecfaSong.Steps.forEach((stp: Step) => {
-        if (Array.isArray(stp.HighScoreList.HighScore)) {
-          stp.HighScoreList.HighScore.forEach(demoteScore);
-        } else {
-          demoteScore(stp.HighScoreList.HighScore);
-        }
-      });
-    } else {
-      if (Array.isArray(ecfaSong.Steps.HighScoreList.HighScore)) {
-        ecfaSong.Steps.HighScoreList.HighScore.forEach(demoteScore);
-      } else {
-        demoteScore(ecfaSong.Steps.HighScoreList.HighScore);
-      }
-    }
+    ecfaSongSteps.forEach((stp: Step) => {
+      xmlValueToArray(stp.HighScoreList.HighScore).forEach(demoteScore);
+    });
 
     const matchingItg = itg.Stats.SongScores.Song.find(
       (s) => s["@_Dir"] === ecfaSong["@_Dir"]
     );
+    const mergedEcfaToItg = mergeSongs(ecfaSong, matchingItg);
+    mergedSongs.push(mergedEcfaToItg);
+
     if (matchingItg) {
-      // we have a matching `itg` song, so we'll need to merge and push to our mergedSongs array
-      mergedSongs.push(mergeSongs(ecfaSong, matchingItg));
       // remove the matching itg song from the original array, we'll re-add after we're done with the newly-merged stats
       itg.Stats.SongScores.Song = itg.Stats.SongScores.Song.filter(
         (s) => s["@_Dir"] !== matchingItg["@_Dir"]
       );
-    } else {
-      // no merging required, this song isn't in `itg`
-      mergedSongs.push(ecfaSong);
     }
   }
-  mergedSongs.forEach((s) => itg.Stats.SongScores.Song.push(s));
+  itg.Stats.SongScores.Song.push(...mergedSongs);
 }
 
 console.log("START");
