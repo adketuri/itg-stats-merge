@@ -15,31 +15,6 @@ function demoteScore(hs: HighScoreElement): void {
   hs.TapNoteScores.W5 = 0;
 }
 
-function addHighscores(
-  toAdd: HighScoreElement[] | HighScoreElement,
-  faModeToItgMode: boolean
-): HighScoreElement[] {
-  let newHs: HighScoreElement[] = [];
-  if (Array.isArray(toAdd)) {
-    toAdd.forEach((ih) => newHs.push(ih));
-  } else {
-    newHs.push(toAdd);
-  }
-  return newHs;
-}
-
-function mergeHighScores(
-  itgHs: HighScoreElement[] | HighScoreElement,
-  existingHs: HighScoreElement[] | HighScoreElement
-): HighScoreElement[] {
-  let newHs = [
-    ...addHighscores(itgHs, false),
-    ...addHighscores(existingHs, true),
-  ];
-  // TODO sort
-  return newHs;
-}
-
 function mergeSteps(itgStep: Step, existingStep?: Step): Step {
   if (!existingStep) {
     return itgStep;
@@ -70,10 +45,10 @@ function mergeSteps(itgStep: Step, existingStep?: Step): Step {
       ? existingStep.HighScoreList.LastPlayed
       : itgStep.HighScoreList.LastPlayed;
 
-  newStep.HighScoreList.HighScore = mergeHighScores(
-    itgStep.HighScoreList.HighScore,
-    existingStep.HighScoreList.HighScore
-  );
+  newStep.HighScoreList.HighScore = [
+    ...xmlValueToArray(itgStep.HighScoreList.HighScore),
+    ...xmlValueToArray(existingStep.HighScoreList.HighScore),
+  ];
 
   return newStep;
 }
