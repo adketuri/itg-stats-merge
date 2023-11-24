@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@types/lodash@^4.14.202":
+  "integrity" "sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ=="
+  "resolved" "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.202.tgz"
+  "version" "4.14.202"
+
 "@types/node@^20.8.3":
   "integrity" "sha512-jxiZQFpb+NlH5kjW49vXxvxTjeeqlbsnTAdBTKpzEdPs9itay7MscYXz3Fo9VYFEsfQ6LJFitHad3faerLAjCw=="
   "resolved" "https://registry.npmjs.org/@types/node/-/node-20.8.3.tgz"
@@ -13,6 +18,11 @@
   "version" "4.3.2"
   dependencies:
     "strnum" "^1.0.5"
+
+"lodash@^4.17.21":
+  "integrity" "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
+  "resolved" "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"
+  "version" "4.17.21"
 
 "strnum@^1.0.5":
   "integrity" "sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA=="
