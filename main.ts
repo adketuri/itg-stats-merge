@@ -1,5 +1,7 @@
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 import * as fs from "fs";
+import { cloneDeep } from "lodash";
+
 import { HighScoreElement, SaveXML, SongScoresSong, Step } from "./types";
 import { xmlValueToArray } from "./utils";
 
@@ -100,33 +102,36 @@ function mergeSongs(
 // puts `ecfa` scores into `itg`
 // ideally this would return a new array but for now we'll just mutate `itg`
 function combine(itg: SaveXML, ecfa: SaveXML) {
-  itg.Stats.GeneralData.TotalSessions += ecfa.Stats.GeneralData.TotalSessions;
-  itg.Stats.GeneralData.TotalGameplaySeconds +=
+  const combinedXml: SaveXML = cloneDeep(itg);
+
+  combinedXml.Stats.GeneralData.TotalSessions +=
+    ecfa.Stats.GeneralData.TotalSessions;
+  combinedXml.Stats.GeneralData.TotalGameplaySeconds +=
     ecfa.Stats.GeneralData.TotalGameplaySeconds;
 
-  itg.Stats.GeneralData.TotalSessionSeconds +=
+  combinedXml.Stats.GeneralData.TotalSessionSeconds +=
     ecfa.Stats.GeneralData.TotalSessionSeconds;
 
-  itg.Stats.GeneralData.TotalCaloriesBurned +=
+  combinedXml.Stats.GeneralData.TotalCaloriesBurned +=
     ecfa.Stats.GeneralData.TotalCaloriesBurned;
 
-  itg.Stats.GeneralData.TotalDancePoints +=
+  combinedXml.Stats.GeneralData.TotalDancePoints +=
     ecfa.Stats.GeneralData.TotalDancePoints;
 
-  itg.Stats.GeneralData.TotalTapsAndHolds +=
+  combinedXml.Stats.GeneralData.TotalTapsAndHolds +=
     ecfa.Stats.GeneralData.TotalTapsAndHolds;
 
-  itg.Stats.GeneralData.TotalJumps += ecfa.Stats.GeneralData.TotalJumps;
-  itg.Stats.GeneralData.TotalHolds += ecfa.Stats.GeneralData.TotalHolds;
-  itg.Stats.GeneralData.TotalRolls += ecfa.Stats.GeneralData.TotalRolls;
-  itg.Stats.GeneralData.TotalMines += ecfa.Stats.GeneralData.TotalMines;
-  itg.Stats.GeneralData.TotalHands += ecfa.Stats.GeneralData.TotalHands;
-  itg.Stats.GeneralData.TotalLifts += ecfa.Stats.GeneralData.TotalLifts;
+  combinedXml.Stats.GeneralData.TotalJumps += ecfa.Stats.GeneralData.TotalJumps;
+  combinedXml.Stats.GeneralData.TotalHolds += ecfa.Stats.GeneralData.TotalHolds;
+  combinedXml.Stats.GeneralData.TotalRolls += ecfa.Stats.GeneralData.TotalRolls;
+  combinedXml.Stats.GeneralData.TotalMines += ecfa.Stats.GeneralData.TotalMines;
+  combinedXml.Stats.GeneralData.TotalHands += ecfa.Stats.GeneralData.TotalHands;
+  combinedXml.Stats.GeneralData.TotalLifts += ecfa.Stats.GeneralData.TotalLifts;
 
-  itg.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular +=
+  combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular +=
     ecfa.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular;
 
-  itg.Stats.GeneralData.NumSongsPlayedByStyle.Style.forEach((s) => {
+  combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style.forEach((s) => {
     const ecfaNumSongsPlayedByStyle =
       ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style.find(
         (s2) => s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"]
@@ -138,24 +143,24 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
   });
 
   // these object.keys assume both xml files have all keys, because i'm lazy
-  Object.keys(itg.Stats.GeneralData.NumSongsPlayedByDifficulty).forEach(
+  Object.keys(combinedXml.Stats.GeneralData.NumSongsPlayedByDifficulty).forEach(
     (k) =>
-      (itg.Stats.GeneralData.NumSongsPlayedByDifficulty[k] +=
+      (combinedXml.Stats.GeneralData.NumSongsPlayedByDifficulty[k] +=
         ecfa.Stats.GeneralData.NumSongsPlayedByDifficulty[k])
   );
 
-  Object.keys(itg.Stats.GeneralData.NumSongsPlayedByMeter).forEach(
+  Object.keys(combinedXml.Stats.GeneralData.NumSongsPlayedByMeter).forEach(
     (k) =>
-      (itg.Stats.GeneralData.NumSongsPlayedByMeter[k] +=
+      (combinedXml.Stats.GeneralData.NumSongsPlayedByMeter[k] +=
         ecfa.Stats.GeneralData.NumSongsPlayedByMeter[k])
   );
 
-  itg.Stats.GeneralData.NumTotalSongsPlayed +=
+  combinedXml.Stats.GeneralData.NumTotalSongsPlayed +=
     ecfa.Stats.GeneralData.NumTotalSongsPlayed;
 
-  Object.keys(itg.Stats.GeneralData.NumStagesPassedByGrade).forEach(
+  Object.keys(combinedXml.Stats.GeneralData.NumStagesPassedByGrade).forEach(
     (k) =>
-      (itg.Stats.GeneralData.NumStagesPassedByGrade[k] +=
+      (combinedXml.Stats.GeneralData.NumStagesPassedByGrade[k] +=
         ecfa.Stats.GeneralData.NumStagesPassedByGrade[k])
   );
 
@@ -169,7 +174,7 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
       xmlValueToArray(stp.HighScoreList.HighScore).forEach(demoteScore);
     });
 
-    const matchingItg = itg.Stats.SongScores.Song.find(
+    const matchingItg = combinedXml.Stats.SongScores.Song.find(
       (s) => s["@_Dir"] === ecfaSong["@_Dir"]
     );
     const mergedEcfaToItg = mergeSongs(ecfaSong, matchingItg);
@@ -177,12 +182,15 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
 
     if (matchingItg) {
       // remove the matching itg song from the original array, we'll re-add after we're done with the newly-merged stats
-      itg.Stats.SongScores.Song = itg.Stats.SongScores.Song.filter(
-        (s) => s["@_Dir"] !== matchingItg["@_Dir"]
-      );
+      combinedXml.Stats.SongScores.Song =
+        combinedXml.Stats.SongScores.Song.filter(
+          (s) => s["@_Dir"] !== matchingItg["@_Dir"]
+        );
     }
   }
-  itg.Stats.SongScores.Song.push(...mergedSongs);
+  combinedXml.Stats.SongScores.Song.push(...mergedSongs);
+
+  return combinedXml;
 }
 
 function main() {
@@ -216,11 +224,11 @@ function main() {
             return;
           }
           itg = parser.parse(data, opts);
-          combine(itg, ecfa); // this mutates `itg`
+          const combinedXml: SaveXML = combine(itg, ecfa);
 
           const builder = new XMLBuilder({ ...opts, format: true });
-          const xmlContent = builder.build(itg);
-          fs.writeFile("output/Stats-Merged.xml", xmlContent, () =>
+          const combinedXmlContent = builder.build(combinedXml);
+          fs.writeFile("output/Stats-Merged.xml", combinedXmlContent, () =>
             console.log("DONE merged xml")
           );
         }
