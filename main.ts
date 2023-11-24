@@ -99,7 +99,7 @@ function mergeSongs(
 
 // puts `ecfa` scores into `itg`
 // ideally this would return a new array but for now we'll just mutate `itg`
-function combine() {
+function combine(itg: SaveXML, ecfa: SaveXML) {
   itg.Stats.GeneralData.TotalSessions += ecfa.Stats.GeneralData.TotalSessions;
   itg.Stats.GeneralData.TotalGameplaySeconds +=
     ecfa.Stats.GeneralData.TotalGameplaySeconds;
@@ -185,44 +185,48 @@ function combine() {
   itg.Stats.SongScores.Song.push(...mergedSongs);
 }
 
-console.log("START");
-let ecfa: SaveXML;
-let itg: SaveXML;
+function main() {
+  console.log("START");
+  let ecfa: SaveXML;
+  let itg: SaveXML;
 
-const opts = {
-  ignoreAttributes: false,
-  attributeNamePrefix: "@_",
-  allowBooleanAttributes: true,
-};
-const parser = new XMLParser(opts);
+  const opts = {
+    ignoreAttributes: false,
+    attributeNamePrefix: "@_",
+    allowBooleanAttributes: true,
+  };
+  const parser = new XMLParser(opts);
 
-console.log("process", process.argv);
-fs.readFile(
-  process.argv.length > 3 ? process.argv[3] : "input/ECFA-Stats.xml",
-  "utf8",
-  (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    ecfa = parser.parse(data, opts);
-    fs.readFile(
-      process.argv.length > 2 ? process.argv[2] : "input/Stats.xml",
-      "utf8",
-      (err, data) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        itg = parser.parse(data, opts);
-        combine(); // this mutates `itg`
-
-        const builder = new XMLBuilder({ ...opts, format: true });
-        const xmlContent = builder.build(itg);
-        fs.writeFile("output/Stats-Merged.xml", xmlContent, () =>
-          console.log("DONE merged xml")
-        );
+  console.log("process", process.argv);
+  fs.readFile(
+    process.argv.length > 3 ? process.argv[3] : "input/ECFA-Stats.xml",
+    "utf8",
+    (err, data) => {
+      if (err) {
+        console.error(err);
+        return;
       }
-    );
-  }
-);
+      ecfa = parser.parse(data, opts);
+      fs.readFile(
+        process.argv.length > 2 ? process.argv[2] : "input/Stats.xml",
+        "utf8",
+        (err, data) => {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          itg = parser.parse(data, opts);
+          combine(itg, ecfa); // this mutates `itg`
+
+          const builder = new XMLBuilder({ ...opts, format: true });
+          const xmlContent = builder.build(itg);
+          fs.writeFile("output/Stats-Merged.xml", xmlContent, () =>
+            console.log("DONE merged xml")
+          );
+        }
+      );
+    }
+  );
+}
+
+main();
