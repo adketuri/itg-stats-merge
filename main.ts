@@ -48,7 +48,12 @@ function mergeSteps(itgStep: Step, existingStep?: Step): Step {
   newStep.HighScoreList.HighScore = [
     ...xmlValueToArray(itgStep.HighScoreList.HighScore),
     ...xmlValueToArray(existingStep.HighScoreList.HighScore),
-  ];
+  ].sort((a, b) => {
+    if (b.PercentDP !== a.PercentDP) {
+      return b.PercentDP - a.PercentDP;
+    }
+    return b.DateTime.localeCompare(a.DateTime);
+  });
 
   return newStep;
 }
@@ -71,7 +76,6 @@ function mergeSongs(
   const itgSteps = xmlValueToArray(itgSong.Steps);
 
   itgSteps.forEach((itgStep: Step) => {
-    // TODO combine me v
     const existingStep: Step | undefined = newSongs.Steps.find(
       (newStep: Step) =>
         newStep["@_Difficulty"] === itgStep["@_Difficulty"] &&
