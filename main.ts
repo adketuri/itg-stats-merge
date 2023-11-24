@@ -5,6 +5,12 @@ import { cloneDeep } from "lodash";
 import { HighScoreElement, SaveXML, SongScoresSong, Step } from "./types";
 import { xmlValueToArray } from "./utils";
 
+const PARSER_OPTIONS = {
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  allowBooleanAttributes: true,
+};
+
 function demoteScore(hs: HighScoreElement): void {
   if (!hs) {
     // there's actually a world where there's a played entry but there's no scores yet, we can just return
@@ -193,48 +199,37 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
   return combinedXml;
 }
 
+function parseStatsXml(path: string): SaveXML | null {
+  try {
+    const fileContents = fs.readFileSync(path, "utf8");
+    const parser = new XMLParser(PARSER_OPTIONS);
+    return parser.parse(fileContents);
+  } catch {
+    console.log(`Error: Failed to parse ${path}`);
+    return null;
+  }
+}
+
 function main() {
-  console.log("START");
-  let ecfa: SaveXML;
-  let itg: SaveXML;
+  // validate args
+  if (process.argv.length !== 4) {
+    console.log(
+      "Usage: npm run convert <Stats.xml path> <ECFA-Stats.xml path>"
+    );
+    return;
+  }
 
-  const opts = {
-    ignoreAttributes: false,
-    attributeNamePrefix: "@_",
-    allowBooleanAttributes: true,
-  };
-  const parser = new XMLParser(opts);
+  // read XML files into objects
+  const itg: SaveXML | null = parseStatsXml(process.argv[2]);
+  const ecfa: SaveXML | null = parseStatsXml(process.argv[3]);
+  if (!itg || !ecfa) {
+    return;
+  }
 
-  console.log("process", process.argv);
-  fs.readFile(
-    process.argv.length > 3 ? process.argv[3] : "input/ECFA-Stats.xml",
-    "utf8",
-    (err, data) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      ecfa = parser.parse(data, opts);
-      fs.readFile(
-        process.argv.length > 2 ? process.argv[2] : "input/Stats.xml",
-        "utf8",
-        (err, data) => {
-          if (err) {
-            console.error(err);
-            return;
-          }
-          itg = parser.parse(data, opts);
-          const combinedXml: SaveXML = combine(itg, ecfa);
-
-          const builder = new XMLBuilder({ ...opts, format: true });
-          const combinedXmlContent = builder.build(combinedXml);
-          fs.writeFile("output/Stats-Merged.xml", combinedXmlContent, () =>
-            console.log("DONE merged xml")
-          );
-        }
-      );
-    }
-  );
+  const combinedXml: SaveXML = combine(itg, ecfa);
+  const builder = new XMLBuilder({ ...PARSER_OPTIONS, format: true });
+  const combinedXmlContent = builder.build(combinedXml);
+  fs.writeFileSync("output/Stats-Merged.xml", combinedXmlContent);
 }
 
 main();
