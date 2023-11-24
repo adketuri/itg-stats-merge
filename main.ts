@@ -130,7 +130,7 @@ function combine() {
     if (!ecfaNumSongsPlayedByStyle) {
       return;
     }
-    return (s["#text"] += ecfaNumSongsPlayedByStyle["#text"]);
+    s["#text"] += ecfaNumSongsPlayedByStyle["#text"];
   });
 
   // these object.keys assume both xml files have all keys, because i'm lazy
