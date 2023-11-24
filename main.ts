@@ -8,7 +8,11 @@ function demoteScore(hs: HighScoreElement): void {
     // there's actually a world where there's a played entry but there's no scores yet, we can just return
     return;
   }
+  // repurpose <Score> to save the white counts
+  hs.Score = hs.TapNoteScores.W2;
+  // combine blue/white counts into a sum of fantastics
   hs.TapNoteScores.W1 = hs.TapNoteScores.W1 + hs.TapNoteScores.W2;
+  // shift other judgments down
   hs.TapNoteScores.W2 = hs.TapNoteScores.W3;
   hs.TapNoteScores.W3 = hs.TapNoteScores.W4;
   hs.TapNoteScores.W4 = hs.TapNoteScores.W5;
@@ -215,11 +219,6 @@ fs.readFile(
 
         const builder = new XMLBuilder({ ...opts, format: true });
         const xmlContent = builder.build(itg);
-        fs.writeFile(
-          "output/Stats-Merged.json",
-          JSON.stringify(itg, undefined, 2),
-          () => console.log("DONE merged json")
-        );
         fs.writeFile("output/Stats-Merged.xml", xmlContent, () =>
           console.log("DONE merged xml")
         );
