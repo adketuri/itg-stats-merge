@@ -1,4 +1,10 @@
 {
+  "name": "itg-stats-merge",
+  "main": "main.ts",
+  "author": {
+    "name": "Andrew Keturi"
+  },
+  "version": "0.1.0",
   "devDependencies": {
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.8.3",
