@@ -107,7 +107,7 @@ function mergeSongs(
 
 // puts `ecfa` scores into `itg`
 // ideally this would return a new array but for now we'll just mutate `itg`
-function combine(itg: SaveXML, ecfa: SaveXML) {
+export function combine(itg: SaveXML, ecfa: SaveXML) {
   const combinedXml: SaveXML = cloneDeep(itg);
 
   combinedXml.Stats.GeneralData.TotalSessions +=
@@ -137,9 +137,10 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
   combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular +=
     ecfa.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular;
 
-  combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style.forEach((s) => {
+  console.log("!AK types", typeof combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style)
+  xmlValueToArray(combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style).forEach((s) => {
     const ecfaNumSongsPlayedByStyle =
-      ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style.find(
+      xmlValueToArray(ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style).find(
         (s2) => s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"]
       );
     if (!ecfaNumSongsPlayedByStyle) {
@@ -184,7 +185,6 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
     const matchingItg = combinedXml.Stats.SongScores.Song.find(
       (s) => s && s["@_Dir"] === ecfaSong["@_Dir"]
     );
-    if (!matchingItg) throw new Error("No matching itg song")
     const mergedEcfaToItg = mergeSongs(ecfaSong, matchingItg);
     mergedSongs.push(mergedEcfaToItg);
 
@@ -201,15 +201,19 @@ function combine(itg: SaveXML, ecfa: SaveXML) {
   return combinedXml;
 }
 
-function parseStatsXml(path: string): SaveXML | null {
+export function readStatsXml(path: string) {
   try {
     const fileContents = fs.readFileSync(path, "utf8");
-    const parser = new XMLParser(PARSER_OPTIONS);
-    return parser.parse(fileContents);
+    return parseStatsXml(fileContents)
   } catch {
     console.log(`Error: Failed to parse ${path}`);
     return null;
   }
+}
+
+export function parseStatsXml(fileContents: string): SaveXML | null {
+  const parser = new XMLParser(PARSER_OPTIONS);
+  return parser.parse(fileContents);
 }
 
 export function main() {
@@ -222,8 +226,8 @@ export function main() {
   }
 
   // read XML files into objects
-  const itg: SaveXML | null = parseStatsXml(process.argv[2]);
-  const ecfa: SaveXML | null = parseStatsXml(process.argv[3]);
+  const itg: SaveXML | null = readStatsXml(process.argv[2]);
+  const ecfa: SaveXML | null = readStatsXml(process.argv[3]);
   if (!itg || !ecfa) {
     return;
   }
@@ -231,7 +235,7 @@ export function main() {
   const combinedXml: SaveXML = combine(itg, ecfa);
   const builder = new XMLBuilder({ ...PARSER_OPTIONS, format: true });
   const combinedXmlContent = builder.build(combinedXml);
-  fs.writeFileSync("output/Stats-Merged.xml", combinedXmlContent);
+  fs.writeFileSync("Stats-Merged.xml", combinedXmlContent);
 }
 
 main();
