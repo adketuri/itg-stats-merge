@@ -1,9 +1,12 @@
 {
   "name": "itg-stats-merge",
-  "main": "main.ts",
+  "description": "A tool to merge game save data in Stepmania.",
+  "homepage": "https://github.com/adketuri/itg-stats-merge",
+  "main": "index.ts",
   "author": {
     "name": "Andrew Keturi"
   },
+  "license": "MIT",
   "version": "0.1.0",
   "devDependencies": {
     "@types/lodash": "^4.14.202",
@@ -15,6 +18,6 @@
     "lodash": "^4.17.21"
   },
   "scripts": {
-    "convert": "tsc --project tsconfig.json && node dist/main.js "
+    "convert": "tsc --project tsconfig.json && node dist/driver.js "
   }
 }

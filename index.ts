@@ -72,7 +72,7 @@ function mergeSteps(itgStep: Step, existingStep?: Step): Step {
 
 function mergeSongs(
   ecfaSong: SongScoresSong,
-  itgSong?: SongScoresSong
+  itgSong?: SongScoresSong | null
 ): SongScoresSong {
   if (!itgSong) {
     return ecfaSong;
@@ -137,17 +137,22 @@ export function combine(itg: SaveXML, ecfa: SaveXML) {
   combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular +=
     ecfa.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular;
 
-  console.log("!AK types", typeof combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style)
-  xmlValueToArray(combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style).forEach((s) => {
-    const ecfaNumSongsPlayedByStyle =
-      xmlValueToArray(ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style).find(
-        (s2) => s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"]
-      );
-    if (!ecfaNumSongsPlayedByStyle) {
+  const combinedSongsByPlayStyle = xmlValueToArray(combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style)
+  combinedSongsByPlayStyle.forEach((s) => {
+    try {
+      const ecfaNumSongsPlayedByStyle =
+        xmlValueToArray(ecfa.Stats.GeneralData.NumSongsPlayedByStyle.Style).find(
+          (s2) => s2["@_Game"] === s["@_Game"] && s2["@_Style"] === s["@_Style"]
+        );
+      if (!ecfaNumSongsPlayedByStyle) {
+        return;
+      }
+      s["#text"] += ecfaNumSongsPlayedByStyle["#text"];
+    } catch (e) {
       return;
     }
-    s["#text"] += ecfaNumSongsPlayedByStyle["#text"];
   });
+  combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style = combinedSongsByPlayStyle
 
   // these object.keys assume both xml files have all keys, because i'm lazy
   Object.keys(combinedXml.Stats.GeneralData.NumSongsPlayedByDifficulty).forEach(
@@ -198,7 +203,10 @@ export function combine(itg: SaveXML, ecfa: SaveXML) {
   }
   combinedXml.Stats.SongScores.Song.push(...mergedSongs);
 
-  return combinedXml;
+  // Convert the object back to xml and return it
+  const builder = new XMLBuilder({ ...PARSER_OPTIONS, format: true });
+  const combinedXmlContent = builder.build(combinedXml);
+  return combinedXmlContent;
 }
 
 export function readStatsXml(path: string) {
@@ -215,27 +223,3 @@ export function parseStatsXml(fileContents: string): SaveXML | null {
   const parser = new XMLParser(PARSER_OPTIONS);
   return parser.parse(fileContents);
 }
-
-export function main() {
-  // validate args
-  if (process.argv.length !== 4) {
-    console.log(
-      "Usage: npm run convert <Stats.xml path> <ECFA-Stats.xml path>"
-    );
-    return;
-  }
-
-  // read XML files into objects
-  const itg: SaveXML | null = readStatsXml(process.argv[2]);
-  const ecfa: SaveXML | null = readStatsXml(process.argv[3]);
-  if (!itg || !ecfa) {
-    return;
-  }
-
-  const combinedXml: SaveXML = combine(itg, ecfa);
-  const builder = new XMLBuilder({ ...PARSER_OPTIONS, format: true });
-  const combinedXmlContent = builder.build(combinedXml);
-  fs.writeFileSync("Stats-Merged.xml", combinedXmlContent);
-}
-
-main();

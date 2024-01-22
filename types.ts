@@ -2,21 +2,21 @@
 
 export interface SaveXML {
     "?xml": XML;
-    Stats:  Stats;
+    Stats: Stats;
 }
 
 export interface XML {
-    "@_version":  string;
+    "@_version": string;
     "@_encoding": string;
 }
 
 export interface Stats {
-    GeneralData:    GeneralData;
-    SongScores:     SongScores;
-    CourseScores:   string;
+    GeneralData: GeneralData;
+    SongScores: SongScores;
+    CourseScores: string;
     CategoryScores: string;
     ScreenshotData: string;
-    CalorieData:    CalorieData;
+    CalorieData: CalorieData;
 }
 
 export interface CalorieData {
@@ -24,58 +24,58 @@ export interface CalorieData {
 }
 
 export interface CaloriesBurned {
-    "#text":  number;
+    "#text": number;
     "@_Date": string;
 }
 
 export interface GeneralData {
-    DisplayName:                string;
-    CharacterID:                string;
-    LastUsedHighScoreName:      Name;
-    WeightPounds:               number;
-    Voomax:                     number;
-    BirthYear:                  number;
-    IgnoreStepCountCalories:    number;
-    IsMale:                     number;
-    IsMachine:                  number;
-    Guid:                       GUID;
-    SortOrder:                  string;
-    LastDifficulty:             Difficulty;
-    LastCourseDifficulty:       Difficulty;
-    LastStepsType:              StepsType;
-    Song:                       GeneralDataSong;
-    Course:                     Course;
-    CurrentCombo:               number;
-    TotalSessions:              number;
-    TotalSessionSeconds:        number;
-    TotalGameplaySeconds:       number;
-    TotalCaloriesBurned:        number;
-    GoalType:                   number;
-    GoalCalories:               number;
-    GoalSeconds:                number;
-    LastPlayedMachineGuid:      MachineGUID;
-    LastPlayedDate:             string;
-    TotalDancePoints:           number;
-    NumExtraStagesPassed:       number;
-    NumExtraStagesFailed:       number;
-    NumToasties:                number;
-    TotalTapsAndHolds:          number;
-    TotalJumps:                 number;
-    TotalHolds:                 number;
-    TotalRolls:                 number;
-    TotalMines:                 number;
-    TotalHands:                 number;
-    TotalLifts:                 number;
-    DefaultModifiers:           DefaultModifiers;
-    Unlocks:                    string;
-    NumSongsPlayedByPlayMode:   NumSedByPlayMode;
-    NumSongsPlayedByStyle:      NumSongsPlayedByStyle;
+    DisplayName: string;
+    CharacterID: string;
+    LastUsedHighScoreName: string;
+    WeightPounds: number;
+    Voomax: number;
+    BirthYear: number;
+    IgnoreStepCountCalories: number;
+    IsMale: number;
+    IsMachine: number;
+    Guid: GUID;
+    SortOrder: string;
+    LastDifficulty: Difficulty;
+    LastCourseDifficulty: Difficulty;
+    LastStepsType: StepsType;
+    Song: GeneralDataSong;
+    Course: Course;
+    CurrentCombo: number;
+    TotalSessions: number;
+    TotalSessionSeconds: number;
+    TotalGameplaySeconds: number;
+    TotalCaloriesBurned: number;
+    GoalType: number;
+    GoalCalories: number;
+    GoalSeconds: number;
+    LastPlayedMachineGuid: MachineGUID;
+    LastPlayedDate: string;
+    TotalDancePoints: number;
+    NumExtraStagesPassed: number;
+    NumExtraStagesFailed: number;
+    NumToasties: number;
+    TotalTapsAndHolds: number;
+    TotalJumps: number;
+    TotalHolds: number;
+    TotalRolls: number;
+    TotalMines: number;
+    TotalHands: number;
+    TotalLifts: number;
+    DefaultModifiers: DefaultModifiers;
+    Unlocks: string;
+    NumSongsPlayedByPlayMode: NumSedByPlayMode;
+    NumSongsPlayedByStyle: NumSongsPlayedByStyle;
     NumSongsPlayedByDifficulty: NumSongsPlayedByDifficulty;
-    NumSongsPlayedByMeter:      { [key: string]: number };
-    NumTotalSongsPlayed:        number;
-    NumStagesPassedByPlayMode:  NumSedByPlayMode;
-    NumStagesPassedByGrade:     { [key: string]: number };
-    UserTable:                  string;
+    NumSongsPlayedByMeter: { [key: string]: number };
+    NumTotalSongsPlayed: number;
+    NumStagesPassedByPlayMode: NumSedByPlayMode;
+    NumStagesPassedByGrade: { [key: string]: number };
+    UserTable: string;
 }
 
 export interface Course {
@@ -110,17 +110,13 @@ export enum StepsType {
     DanceSingle = "dance-single",
 }
 
-export enum Name {
-    Zxyu = "ZXYU",
-}
-
 export interface NumSongsPlayedByDifficulty {
-    Beginner:  number;
-    Easy:      number;
-    Medium:    number;
-    Hard:      number;
+    Beginner: number;
+    Easy: number;
+    Medium: number;
+    Hard: number;
     Challenge: number;
-    Edit:      number;
+    Edit: number;
 }
 
 export interface NumSedByPlayMode {
@@ -128,12 +124,12 @@ export interface NumSedByPlayMode {
 }
 
 export interface NumSongsPlayedByStyle {
-    Style: Style[];
+    Style: Style | Style[];
 }
 
 export interface Style {
-    "#text":   number;
-    "@_Game":  string;
+    "#text": number;
+    "@_Game": string;
     "@_Style": string;
 }
 
@@ -146,21 +142,21 @@ export interface SongScores {
 }
 
 export interface SongScoresSong {
-    Steps:   Step[] | StepsClass;
+    Steps: Step[] | StepsClass;
     "@_Dir": string;
 }
 
 export interface Step {
-    HighScoreList:  HighScoreList;
+    HighScoreList: HighScoreList;
     "@_Difficulty": Difficulty;
-    "@_StepsType":  StepsType;
+    "@_StepsType": StepsType;
 }
 
 export interface HighScoreList {
     NumTimesPlayed: number;
-    LastPlayed:     string;
-    HighGrade?:     Grade;
-    HighScore?:     HighScoreElement[] | HighScoreElement;
+    LastPlayed: string;
+    HighGrade?: Grade;
+    HighScore?: HighScoreElement[] | HighScoreElement;
 }
 
 export enum Grade {
@@ -185,29 +181,29 @@ export enum Grade {
 }
 
 export interface HighScoreElement {
-    Name:                 Name;
-    Grade:                Grade;
-    Score:                number;
-    PercentDP:            number;
-    SurviveSeconds:       number;
-    MaxCombo:             number;
-    StageAward:           StageAward;
-    PeakComboAward:       number | string;
-    Modifiers:            string;
-    DateTime:             string;
-    PlayerGuid:           GUID;
-    MachineGuid:          MachineGUID;
-    ProductID:            number;
-    TapNoteScores:        TapNoteScores;
-    HoldNoteScores:       HoldNoteScores;
-    RadarValues:          { [key: string]: number };
+    Name: string;
+    Grade: Grade;
+    Score: number;
+    PercentDP: number;
+    SurviveSeconds: number;
+    MaxCombo: number;
+    StageAward: StageAward;
+    PeakComboAward: number | string;
+    Modifiers: string;
+    DateTime: string;
+    PlayerGuid: GUID;
+    MachineGuid: MachineGUID;
+    ProductID: number;
+    TapNoteScores: TapNoteScores;
+    HoldNoteScores: HoldNoteScores;
+    RadarValues: { [key: string]: number };
     LifeRemainingSeconds: number;
-    Disqualified:         number;
+    Disqualified: number;
 }
 
 export interface HoldNoteScores {
-    LetGo:      number;
-    Held:       number;
+    LetGo: number;
+    Held: number;
     MissedHold: number;
 }
 
@@ -221,22 +217,22 @@ export enum StageAward {
 }
 
 export interface TapNoteScores {
-    HitMine:        number;
-    AvoidMine:      number;
+    HitMine: number;
+    AvoidMine: number;
     CheckpointMiss: number;
-    Miss:           number;
-    W5:             number;
-    W4:             number;
-    W3:             number;
-    W2:             number;
-    W1:             number;
-    CheckpointHit:  number;
+    Miss: number;
+    W5: number;
+    W4: number;
+    W3: number;
+    W2: number;
+    W1: number;
+    CheckpointHit: number;
 }
 
 export interface StepsClass {
-    HighScoreList:    HighScoreList;
-    "@_Difficulty":   Difficulty;
-    "@_StepsType":    StepsType;
+    HighScoreList: HighScoreList;
+    "@_Difficulty": Difficulty;
+    "@_StepsType": StepsType;
     "@_Description"?: string;
-    "@_Hash"?:        string;
+    "@_Hash"?: string;
 }
