@@ -2,7 +2,7 @@
   "name": "itg-stats-merge",
   "description": "A tool to merge game save data in Stepmania.",
   "homepage": "https://github.com/adketuri/itg-stats-merge",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "author": {
     "name": "Andrew Keturi"
   },
@@ -13,6 +13,9 @@
     "@types/node": "^20.8.3",
     "typescript": "^4.9.5"
   },
+  "keywords": [
+    "ITGMania"
+  ],
   "dependencies": {
     "fast-xml-parser": "^4.3.2",
     "lodash": "^4.17.21"
