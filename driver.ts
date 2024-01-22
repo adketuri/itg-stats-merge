@@ -1,6 +1,16 @@
-import { readStatsXml, combine } from ".";
+import { combine, parseStatsXml } from ".";
 import * as fs from "fs";
 import { SaveXML } from "./types";
+
+function readStatsXml(path: string) {
+  try {
+    const fileContents = fs.readFileSync(path, "utf8");
+    return parseStatsXml(fileContents)
+  } catch {
+    console.log(`Error: Failed to parse ${path}`);
+    return null;
+  }
+}
 
 function convert() {
   // validate args

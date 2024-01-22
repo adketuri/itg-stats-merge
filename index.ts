@@ -1,7 +1,5 @@
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
-import * as fs from "fs";
 import { cloneDeep } from "lodash";
-
 import { HighScoreElement, NumSongsPlayedByDifficulty, SaveXML, SongScoresSong, Step } from "./types";
 import { xmlValueToArray } from "./utils";
 
@@ -207,16 +205,6 @@ export function combine(itg: SaveXML, ecfa: SaveXML) {
   const builder = new XMLBuilder({ ...PARSER_OPTIONS, format: true });
   const combinedXmlContent = builder.build(combinedXml);
   return combinedXmlContent;
-}
-
-export function readStatsXml(path: string) {
-  try {
-    const fileContents = fs.readFileSync(path, "utf8");
-    return parseStatsXml(fileContents)
-  } catch {
-    console.log(`Error: Failed to parse ${path}`);
-    return null;
-  }
 }
 
 export function parseStatsXml(fileContents: string): SaveXML | null {
