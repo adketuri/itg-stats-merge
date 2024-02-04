@@ -132,9 +132,16 @@ export function combine(itg: SaveXML, ecfa: SaveXML) {
   combinedXml.Stats.GeneralData.TotalHands += ecfa.Stats.GeneralData.TotalHands;
   combinedXml.Stats.GeneralData.TotalLifts += ecfa.Stats.GeneralData.TotalLifts;
 
+  // This handles the case where someone is attempting to merge a clean Stats.xml (no play data)
+  if (!combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular) {
+    combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode = { Regular: 0 }
+  }
   combinedXml.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular +=
     ecfa.Stats.GeneralData.NumSongsPlayedByPlayMode.Regular;
 
+  if (!combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style) {
+    combinedXml.Stats.GeneralData.NumSongsPlayedByStyle = { Style: [] }
+  }
   const combinedSongsByPlayStyle = xmlValueToArray(combinedXml.Stats.GeneralData.NumSongsPlayedByStyle.Style)
   combinedSongsByPlayStyle.forEach((s) => {
     try {
@@ -185,6 +192,13 @@ export function combine(itg: SaveXML, ecfa: SaveXML) {
       xmlValueToArray(stp.HighScoreList.HighScore).forEach(demoteScore);
     });
 
+    // Handle two edge cases here: 1. no songs from Stats.xml (??????), 2. just one song from Stats.xml (????)
+    if (!combinedXml.Stats.SongScores.Song) {
+      combinedXml.Stats.SongScores = { Song: [] };
+    } else {
+      combinedXml.Stats.SongScores.Song = xmlValueToArray(combinedXml.Stats.SongScores.Song)
+    }
+    // By now this should just be an array (sane path)
     const matchingItg = combinedXml.Stats.SongScores.Song.find(
       (s) => s && s["@_Dir"] === ecfaSong["@_Dir"]
     );
